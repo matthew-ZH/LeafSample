@@ -12,6 +12,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import java.lang.ref.WeakReference;
 import java.util.Random;
 
 /**
@@ -22,12 +23,7 @@ public class LeafEffect extends View {
     private float deltaA;
     private Random random;
     private Matrix matrix;
-    private Handler handler = new Handler()  {
-        @Override
-        public void handleMessage(Message msg) {
-            invalidate();
-        }
-    };
+    private Handler handler;
 
     public LeafEffect(Context context) {
         this(context, null);
@@ -43,6 +39,7 @@ public class LeafEffect extends View {
     }
 
     private void init() {
+        handler = new SafeHanlder(this);
         deltaA = 0;
         random = new Random();
         matrix = new Matrix();
@@ -126,5 +123,21 @@ public class LeafEffect extends View {
 
     private int generateRandomInt(int start, int end) {
         return random.nextInt(end - start + 1) + start;
+    }
+
+    private static class SafeHanlder extends Handler {
+        private final WeakReference<View> mView;
+
+        public SafeHanlder(View view) {
+            mView = new WeakReference<View>(view);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            View view = mView.get();
+            if (view != null) {
+                view.invalidate();
+            }
+        }
     }
 }
